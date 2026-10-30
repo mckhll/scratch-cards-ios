@@ -1,0 +1,30 @@
+name: Source checks
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  source-checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+          fetch-depth: 2
+      - name: Check public repository metadata
+        run: python3 tools/check_public_repository.py
+      - name: Check Postbox boundaries
+        run: python3 build-system/Make/PostboxImportCheck.py
+      - name: Check patch whitespace
+        run: |
+          if git rev-parse --verify HEAD^ >/dev/null 2>&1; then
+            git show --format= --check HEAD
+          else
+            echo "Initial source import: preserve inherited upstream whitespace."
+          fi
